@@ -31,30 +31,36 @@ export class ClaudeProviderAuth implements IProviderAuth {
 
   /**
    * Returns Claude installation and credential status using Claude Code's auth priority.
+   *
+   * Note: credentials are checked first because the SDK (>= 0.2.113) ships a bundled
+   * native binary and can authenticate even when the `claude` CLI is not on PATH.
+   * Blocking on `installed` would cause a false "Not connected" in that case.
    */
   async getStatus(): Promise<ProviderAuthStatus> {
-    const installed = this.checkInstalled();
+    const credentials = await this.checkCredentials();
 
-    if (!installed) {
+    if (credentials.authenticated) {
       return {
-        installed,
+        installed: true,
         provider: 'claude',
-        authenticated: false,
-        email: null,
-        method: null,
-        error: 'Claude Code CLI is not installed',
+        authenticated: true,
+        email: credentials.email || (credentials.method === 'desktop_app' ? 'Claude Desktop' : 'Authenticated'),
+        method: credentials.method,
       };
     }
 
-    const credentials = await this.checkCredentials();
+    // Credentials not found — check CLI installation to give a useful error message.
+    const installed = this.checkInstalled();
 
     return {
       installed,
       provider: 'claude',
-      authenticated: credentials.authenticated,
-      email: credentials.authenticated ? credentials.email || 'Authenticated' : credentials.email,
+      authenticated: false,
+      email: credentials.email,
       method: credentials.method,
-      error: credentials.authenticated ? undefined : credentials.error || 'Not authenticated',
+      error: installed
+        ? (credentials.error || 'Not authenticated')
+        : 'Claude Code CLI is not installed',
     };
   }
 
@@ -98,8 +104,20 @@ export class ClaudeProviderAuth implements IProviderAuth {
 
       if (accessToken) {
         const expiresAt = typeof oauth?.expiresAt === 'number' ? oauth.expiresAt : undefined;
+        const refreshToken = readOptionalString(oauth?.refreshToken);
         const email = readOptionalString(creds.email) ?? readOptionalString(creds.user) ?? null;
+
+        // Token is still valid.
         if (!expiresAt || Date.now() < expiresAt) {
+          return {
+            authenticated: true,
+            email,
+            method: 'credentials_file',
+          };
+        }
+
+        // Token expired but a refresh token exists — the CLI will auto-refresh it on next use.
+        if (refreshToken) {
           return {
             authenticated: true,
             email,
@@ -114,10 +132,50 @@ export class ClaudeProviderAuth implements IProviderAuth {
           error: 'OAuth token has expired. Please re-authenticate with claude login',
         };
       }
-
-      return { authenticated: false, email: null, method: null };
     } catch {
-      return { authenticated: false, email: null, method: null };
+      // credentials file does not exist or is unreadable — fall through to Desktop app check.
     }
+
+    // Fallback: Claude Desktop app stores an encrypted OAuth token in its own config.
+    // The token itself cannot be decrypted here, but its presence means the bundled
+    // claude binary (used by the SDK) can authenticate via the Desktop app session.
+    const desktopAuth = await this.checkClaudeDesktopAuth();
+    if (desktopAuth.authenticated) {
+      return desktopAuth;
+    }
+
+    return { authenticated: false, email: null, method: null };
+  }
+
+  /**
+   * Checks if the Claude Desktop app has a stored OAuth token.
+   * This covers the case where users authenticate via Claude Desktop rather than
+   * `claude login`, which stores credentials in the Desktop app config instead of
+   * ~/.claude/.credentials.json.
+   */
+  private async checkClaudeDesktopAuth(): Promise<ClaudeCredentialsStatus> {
+    let configPath: string;
+
+    if (process.platform === 'darwin') {
+      configPath = path.join(os.homedir(), 'Library', 'Application Support', 'Claude', 'config.json');
+    } else if (process.platform === 'win32') {
+      configPath = path.join(os.homedir(), 'AppData', 'Roaming', 'Claude', 'config.json');
+    } else {
+      configPath = path.join(os.homedir(), '.config', 'Claude', 'config.json');
+    }
+
+    try {
+      const content = await readFile(configPath, 'utf8');
+      const config = readObjectRecord(JSON.parse(content));
+      // The token is stored encrypted; its presence indicates an active Desktop session.
+      const tokenCache = readOptionalString(config?.['oauth:tokenCache']);
+      if (tokenCache) {
+        return { authenticated: true, email: null, method: 'desktop_app' };
+      }
+    } catch {
+      // Desktop app config not found or unreadable.
+    }
+
+    return { authenticated: false, email: null, method: null };
   }
 }
