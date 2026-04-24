@@ -5,7 +5,7 @@ import { useVersionCheck } from '../../../../hooks/useVersionCheck';
 import PremiumFeatureCard from '../PremiumFeatureCard';
 import { Cloud, Users } from 'lucide-react';
 
-const GITHUB_REPO_URL = 'https://github.com/siteboon/claudecodeui';
+const GITHUB_REPO_URL = 'https://github.com/rm1dev/claudecodeui';
 const DISCORD_URL = 'https://discord.gg/buxwujPNRE';
 const DOCS_URL = 'https://cloudcli.ai/docs/plugin-overview';
 const CLOUDCLI_URL = 'https://cloudcli.ai';

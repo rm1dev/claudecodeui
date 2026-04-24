@@ -3,7 +3,6 @@ import type { TFunction } from 'i18next';
 import { Button, Input } from '../../../../shared/view/ui';
 import { IS_PLATFORM } from '../../../../constants/config';
 import { cn } from '../../../../lib/utils';
-import GitHubStarBadge from './GitHubStarBadge';
 
 type SearchMode = 'projects' | 'conversations';
 
@@ -106,8 +105,6 @@ export default function SidebarHeader({
             </Button>
           </div>
         </div>
-
-        <GitHubStarBadge />
 
         {/* Search bar */}
         {projectsCount > 0 && !isLoading && (

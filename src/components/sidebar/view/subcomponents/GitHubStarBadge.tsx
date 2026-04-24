@@ -2,7 +2,7 @@ import { Star, X } from 'lucide-react';
 import { useGitHubStars } from '../../../../hooks/useGitHubStars';
 import { IS_PLATFORM } from '../../../../constants/config';
 
-const GITHUB_REPO_URL = 'https://github.com/siteboon/claudecodeui';
+const GITHUB_REPO_URL = 'https://github.com/rm1dev/claudecodeui';
 
 function GitHubIcon({ className }: { className?: string }) {
   return (
