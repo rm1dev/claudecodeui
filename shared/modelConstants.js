@@ -93,3 +93,19 @@ export const GEMINI_MODELS = {
 
   DEFAULT: "gemini-3.1-pro-preview",
 };
+
+/**
+ * GapCode Models
+ */
+export const GAPCODE_MODELS = {
+  OPTIONS: [
+    { value: "claude-opus-4-6", label: "Claude Opus 4.6" },
+    { value: "claude-sonnet-4-6", label: "Claude Sonnet 4.6" },
+    { value: "gpt-5.4", label: "GPT-5.4" },
+    { value: "gpt-5.3-codex", label: "GPT-5.3 Codex" },
+    { value: "gpt-5.3-codex-spark", label: "GPT-5.3 Codex Spark" },
+    { value: "gapgpt-qwen-3.5", label: "GapGPT Qwen 3.5" },
+  ],
+
+  DEFAULT: "claude-opus-4-6",
+};

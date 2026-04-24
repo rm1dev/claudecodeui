@@ -85,6 +85,10 @@ export const api = {
     authenticatedFetch(`/api/codex/sessions/${sessionId}`, {
       method: 'DELETE',
     }),
+  deleteGapcodeSession: (sessionId) =>
+    authenticatedFetch(`/api/gapcode/sessions/${sessionId}`, {
+      method: 'DELETE',
+    }),
   deleteGeminiSession: (sessionId) =>
     authenticatedFetch(`/api/gemini/sessions/${sessionId}`, {
       method: 'DELETE',

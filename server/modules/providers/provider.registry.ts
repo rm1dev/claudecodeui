@@ -2,6 +2,7 @@ import { ClaudeProvider } from '@/modules/providers/list/claude/claude.provider.
 import { CodexProvider } from '@/modules/providers/list/codex/codex.provider.js';
 import { CursorProvider } from '@/modules/providers/list/cursor/cursor.provider.js';
 import { GeminiProvider } from '@/modules/providers/list/gemini/gemini.provider.js';
+import { GapcodeProvider } from '@/modules/providers/list/gapcode/gapcode.provider.js';
 import type { IProvider } from '@/shared/interfaces.js';
 import type { LLMProvider } from '@/shared/types.js';
 import { AppError } from '@/shared/utils.js';
@@ -11,6 +12,7 @@ const providers: Record<LLMProvider, IProvider> = {
   codex: new CodexProvider(),
   cursor: new CursorProvider(),
   gemini: new GeminiProvider(),
+  gapcode: new GapcodeProvider(),
 };
 
 /**

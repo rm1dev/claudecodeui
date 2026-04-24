@@ -70,6 +70,14 @@ export default function AgentCategoryContentSection({
         />
       )}
 
+      {selectedCategory === 'permissions' && selectedAgent === 'gapcode' && (
+        <PermissionsContent
+          agent="codex"
+          permissionMode={codexPermissionMode}
+          onPermissionModeChange={onCodexPermissionModeChange}
+        />
+      )}
+
       {selectedCategory === 'mcp' && (
         <McpServers
           selectedProvider={selectedAgent}

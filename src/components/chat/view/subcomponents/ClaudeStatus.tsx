@@ -27,6 +27,7 @@ const DEFAULT_ACTION_WORDS = ['Thinking', 'Processing', 'Analyzing', 'Working', 
 const PROVIDER_LABEL_KEYS: Record<string, string> = {
   claude: 'messageTypes.claude',
   codex: 'messageTypes.codex',
+  gapcode: 'messageTypes.gapcode',
   cursor: 'messageTypes.cursor',
   gemini: 'messageTypes.gemini',
 };

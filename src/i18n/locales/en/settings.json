@@ -320,6 +320,9 @@
       "codex": {
         "description": "OpenAI Codex AI assistant"
       },
+      "gapcode": {
+        "description": "GapCode AI assistant (powered by GapGPT)"
+      },
       "gemini": {
         "description": "Google Gemini AI assistant"
       }

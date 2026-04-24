@@ -9,6 +9,7 @@ import {
   CURSOR_MODELS,
   CODEX_MODELS,
   GEMINI_MODELS,
+  GAPCODE_MODELS,
 } from "../../../../../shared/modelConstants";
 import type { ProjectSession, LLMProvider } from "../../../../types/app";
 import { NextTaskBanner } from "../../../task-master";
@@ -38,6 +39,8 @@ type ProviderSelectionEmptyStateProps = {
   setCursorModel: (model: string) => void;
   codexModel: string;
   setCodexModel: (model: string) => void;
+  gapcodeModel: string;
+  setGapcodeModel: (model: string) => void;
   geminiModel: string;
   setGeminiModel: (model: string) => void;
   tasksEnabled: boolean;
@@ -56,12 +59,14 @@ const PROVIDER_GROUPS: ProviderGroup[] = [
   { id: "claude", name: "Anthropic", models: CLAUDE_MODELS.OPTIONS },
   { id: "cursor", name: "Cursor", models: CURSOR_MODELS.OPTIONS },
   { id: "codex", name: "OpenAI", models: CODEX_MODELS.OPTIONS },
+  { id: "gapcode", name: "GapGPT", models: GAPCODE_MODELS.OPTIONS },
   { id: "gemini", name: "Google", models: GEMINI_MODELS.OPTIONS },
 ];
 
 function getModelConfig(p: LLMProvider) {
   if (p === "claude") return CLAUDE_MODELS;
   if (p === "codex") return CODEX_MODELS;
+  if (p === "gapcode") return GAPCODE_MODELS;
   if (p === "gemini") return GEMINI_MODELS;
   return CURSOR_MODELS;
 }
@@ -71,10 +76,12 @@ function getCurrentModel(
   c: string,
   cu: string,
   co: string,
+  gap: string,
   g: string,
 ) {
   if (p === "claude") return c;
   if (p === "codex") return co;
+  if (p === "gapcode") return gap;
   if (p === "gemini") return g;
   return cu;
 }
@@ -83,6 +90,7 @@ function getProviderDisplayName(p: LLMProvider) {
   if (p === "claude") return "Claude";
   if (p === "cursor") return "Cursor";
   if (p === "codex") return "Codex";
+  if (p === "gapcode") return "GapCode";
   return "Gemini";
 }
 
@@ -98,6 +106,8 @@ export default function ProviderSelectionEmptyState({
   setCursorModel,
   codexModel,
   setCodexModel,
+  gapcodeModel,
+  setGapcodeModel,
   geminiModel,
   setGeminiModel,
   tasksEnabled,
@@ -130,6 +140,7 @@ export default function ProviderSelectionEmptyState({
     claudeModel,
     cursorModel,
     codexModel,
+    gapcodeModel,
     geminiModel,
   );
 
@@ -149,6 +160,9 @@ export default function ProviderSelectionEmptyState({
       } else if (providerId === "codex") {
         setCodexModel(modelValue);
         localStorage.setItem("codex-model", modelValue);
+      } else if (providerId === "gapcode") {
+        setGapcodeModel(modelValue);
+        localStorage.setItem("gapcode-model", modelValue);
       } else if (providerId === "gemini") {
         setGeminiModel(modelValue);
         localStorage.setItem("gemini-model", modelValue);
@@ -157,7 +171,7 @@ export default function ProviderSelectionEmptyState({
         localStorage.setItem("cursor-model", modelValue);
       }
     },
-    [setClaudeModel, setCursorModel, setCodexModel, setGeminiModel],
+    [setClaudeModel, setCursorModel, setCodexModel, setGapcodeModel, setGeminiModel],
   );
 
   const handleModelSelect = useCallback(
@@ -274,6 +288,9 @@ export default function ProviderSelectionEmptyState({
                 }),
                 codex: t("providerSelection.readyPrompt.codex", {
                   model: codexModel,
+                }),
+                gapcode: t("providerSelection.readyPrompt.gapcode", {
+                  model: gapcodeModel,
                 }),
                 gemini: t("providerSelection.readyPrompt.gemini", {
                   model: geminiModel,

@@ -18,6 +18,7 @@
     "claude": "Claude",
     "cursor": "Cursor",
     "codex": "Codex",
+    "gapcode": "GapCode",
     "gemini": "Gemini"
   },
   "tools": {
@@ -186,6 +187,7 @@
       "claude": "Ready to use Claude with {{model}}. Start typing your message below.",
       "cursor": "Ready to use Cursor with {{model}}. Start typing your message below.",
       "codex": "Ready to use Codex with {{model}}. Start typing your message below.",
+      "gapcode": "Ready to use GapCode with {{model}}. Start typing your message below.",
       "gemini": "Ready to use Gemini with {{model}}. Start typing your message below.",
       "default": "Select a provider above to begin"
     }

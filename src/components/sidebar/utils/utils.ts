@@ -44,7 +44,7 @@ export const getSessionDate = (session: SessionWithProvider): Date => {
     return new Date(session.createdAt || 0);
   }
 
-  if (session.__provider === 'codex') {
+  if (session.__provider === 'codex' || session.__provider === 'gapcode') {
     return new Date(session.createdAt || session.lastActivity || 0);
   }
 
@@ -60,6 +60,10 @@ export const getSessionName = (session: SessionWithProvider, t: TFunction): stri
     return session.summary || session.name || t('projects.codexSession');
   }
 
+  if (session.__provider === 'gapcode') {
+    return session.summary || session.name || t('projects.gapcodeSession');
+  }
+
   if (session.__provider === 'gemini') {
     return session.summary || session.name || t('projects.newSession');
   }
@@ -72,7 +76,7 @@ export const getSessionTime = (session: SessionWithProvider): string => {
     return String(session.createdAt || '');
   }
 
-  if (session.__provider === 'codex') {
+  if (session.__provider === 'codex' || session.__provider === 'gapcode') {
     return String(session.createdAt || session.lastActivity || '');
   }
 
@@ -90,6 +94,7 @@ export const createSessionViewModel = (
   return {
     isCursorSession: session.__provider === 'cursor',
     isCodexSession: session.__provider === 'codex',
+    isGapcodeSession: session.__provider === 'gapcode',
     isGeminiSession: session.__provider === 'gemini',
     isActive: diffInMinutes < 10,
     sessionName: getSessionName(session, t),
@@ -117,12 +122,17 @@ export const getAllSessions = (
     __provider: 'codex' as const,
   }));
 
+  const gapcodeSessions = (project.gapcodeSessions || []).map((session) => ({
+    ...session,
+    __provider: 'gapcode' as const,
+  }));
+
   const geminiSessions = (project.geminiSessions || []).map((session) => ({
     ...session,
     __provider: 'gemini' as const,
   }));
 
-  return [...claudeSessions, ...cursorSessions, ...codexSessions, ...geminiSessions].sort(
+  return [...claudeSessions, ...cursorSessions, ...codexSessions, ...gapcodeSessions, ...geminiSessions].sort(
     (a, b) => getSessionDate(b).getTime() - getSessionDate(a).getTime(),
   );
 };

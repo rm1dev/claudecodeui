@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { authenticatedFetch } from '../../../utils/api';
-import { CLAUDE_MODELS, CODEX_MODELS, CURSOR_MODELS, GEMINI_MODELS } from '../../../../shared/modelConstants';
+import { CLAUDE_MODELS, CODEX_MODELS, CURSOR_MODELS, GEMINI_MODELS, GAPCODE_MODELS } from '../../../../shared/modelConstants';
 import type { PendingPermissionRequest, PermissionMode } from '../types/types';
 import type { ProjectSession, LLMProvider } from '../../../types/app';
 
@@ -22,6 +22,9 @@ export function useChatProviderState({ selectedSession }: UseChatProviderStateAr
   });
   const [codexModel, setCodexModel] = useState<string>(() => {
     return localStorage.getItem('codex-model') || CODEX_MODELS.DEFAULT;
+  });
+  const [gapcodeModel, setGapcodeModel] = useState<string>(() => {
+    return localStorage.getItem('gapcode-model') || GAPCODE_MODELS.DEFAULT;
   });
   const [geminiModel, setGeminiModel] = useState<string>(() => {
     return localStorage.getItem('gemini-model') || GEMINI_MODELS.DEFAULT;
@@ -85,7 +88,7 @@ export function useChatProviderState({ selectedSession }: UseChatProviderStateAr
 
   const cyclePermissionMode = useCallback(() => {
     const modes: PermissionMode[] =
-      provider === 'codex'
+      provider === 'codex' || provider === 'gapcode'
         ? ['default', 'acceptEdits', 'bypassPermissions']
         : ['default', 'acceptEdits', 'bypassPermissions', 'plan'];
 
@@ -108,6 +111,8 @@ export function useChatProviderState({ selectedSession }: UseChatProviderStateAr
     setClaudeModel,
     codexModel,
     setCodexModel,
+    gapcodeModel,
+    setGapcodeModel,
     geminiModel,
     setGeminiModel,
     permissionMode,

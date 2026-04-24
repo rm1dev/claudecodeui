@@ -420,6 +420,8 @@ export function useSidebarController({
       let response;
       if (provider === 'codex') {
         response = await api.deleteCodexSession(sessionId);
+      } else if (provider === 'gapcode') {
+        response = await api.deleteGapcodeSession(sessionId);
       } else if (provider === 'gemini') {
         response = await api.deleteGeminiSession(sessionId);
       } else {

@@ -32,6 +32,7 @@ import { getProjects, getSessions, renameProject, deleteSession, deleteProject, 
 import { queryClaudeSDK, abortClaudeSDKSession, isClaudeSDKSessionActive, getActiveClaudeSDKSessions, resolveToolApproval, getPendingApprovalsForSession, reconnectSessionWriter } from './claude-sdk.js';
 import { spawnCursor, abortCursorSession, isCursorSessionActive, getActiveCursorSessions } from './cursor-cli.js';
 import { queryCodex, abortCodexSession, isCodexSessionActive, getActiveCodexSessions } from './openai-codex.js';
+import { queryGapcode, abortGapcodeSession, isGapcodeSessionActive, getActiveGapcodeSessions } from './gapcode.js';
 import { spawnGemini, abortGeminiSession, isGeminiSessionActive, getActiveGeminiSessions } from './gemini-cli.js';
 import sessionManager from './sessionManager.js';
 import gitRoutes from './routes/git.js';
@@ -45,6 +46,7 @@ import agentRoutes from './routes/agent.js';
 import projectsRoutes, { WORKSPACES_ROOT, validateWorkspacePath } from './routes/projects.js';
 import userRoutes from './routes/user.js';
 import codexRoutes from './routes/codex.js';
+import gapcodeRoutes from './routes/gapcode.js';
 import geminiRoutes from './routes/gemini.js';
 import pluginsRoutes from './routes/plugins.js';
 import messagesRoutes from './routes/messages.js';
@@ -56,13 +58,14 @@ import { validateApiKey, authenticateToken, authenticateWebSocket } from './midd
 import { IS_PLATFORM } from './constants/config.js';
 import { getConnectableHost } from '../shared/networkHosts.js';
 
-const VALID_PROVIDERS = ['claude', 'codex', 'cursor', 'gemini'];
+const VALID_PROVIDERS = ['claude', 'codex', 'cursor', 'gemini', 'gapcode'];
 
 // File system watchers for provider project/session folders
 const PROVIDER_WATCH_PATHS = [
     { provider: 'claude', rootPath: path.join(os.homedir(), '.claude', 'projects') },
     { provider: 'cursor', rootPath: path.join(os.homedir(), '.cursor', 'chats') },
     { provider: 'codex', rootPath: path.join(os.homedir(), '.codex', 'sessions') },
+    { provider: 'gapcode', rootPath: path.join(os.homedir(), '.gapcode', 'sessions') },
     { provider: 'gemini', rootPath: path.join(os.homedir(), '.gemini', 'projects') },
     { provider: 'gemini_sessions', rootPath: path.join(os.homedir(), '.gemini', 'sessions') }
 ];
@@ -306,6 +309,9 @@ app.use('/api/user', authenticateToken, userRoutes);
 
 // Codex API Routes (protected)
 app.use('/api/codex', authenticateToken, codexRoutes);
+
+// GapCode API Routes (protected)
+app.use('/api/gapcode', authenticateToken, gapcodeRoutes);
 
 // Gemini API Routes (protected)
 app.use('/api/gemini', authenticateToken, geminiRoutes);
@@ -1422,6 +1428,12 @@ function handleChatConnection(ws, request) {
                 console.log('🔄 Session:', data.options?.sessionId ? 'Resume' : 'New');
                 console.log('🤖 Model:', data.options?.model || 'default');
                 await queryCodex(data.command, data.options, writer);
+            } else if (data.type === 'gapcode-command') {
+                console.log('[DEBUG] GapCode message:', data.command || '[Continue/Resume]');
+                console.log('📁 Project:', data.options?.projectPath || data.options?.cwd || 'Unknown');
+                console.log('🔄 Session:', data.options?.sessionId ? 'Resume' : 'New');
+                console.log('🤖 Model:', data.options?.model || 'default');
+                await queryGapcode(data.command, data.options, writer);
             } else if (data.type === 'gemini-command') {
                 console.log('[DEBUG] Gemini message:', data.command || '[Continue/Resume]');
                 console.log('📁 Project:', data.options?.projectPath || data.options?.cwd || 'Unknown');
@@ -1445,6 +1457,8 @@ function handleChatConnection(ws, request) {
                     success = abortCursorSession(data.sessionId);
                 } else if (provider === 'codex') {
                     success = abortCodexSession(data.sessionId);
+                } else if (provider === 'gapcode') {
+                    success = abortGapcodeSession(data.sessionId);
                 } else if (provider === 'gemini') {
                     success = abortGeminiSession(data.sessionId);
                 } else {
@@ -1479,6 +1493,8 @@ function handleChatConnection(ws, request) {
                     isActive = isCursorSessionActive(sessionId);
                 } else if (provider === 'codex') {
                     isActive = isCodexSessionActive(sessionId);
+                } else if (provider === 'gapcode') {
+                    isActive = isGapcodeSessionActive(sessionId);
                 } else if (provider === 'gemini') {
                     isActive = isGeminiSessionActive(sessionId);
                 } else {
@@ -1514,6 +1530,7 @@ function handleChatConnection(ws, request) {
                     claude: getActiveClaudeSDKSessions(),
                     cursor: getActiveCursorSessions(),
                     codex: getActiveCodexSessions(),
+                    gapcode: getActiveGapcodeSessions(),
                     gemini: getActiveGeminiSessions()
                 };
                 writer.send({
@@ -1623,7 +1640,7 @@ function handleShellConnection(ws) {
                 if (isPlainShell) {
                     welcomeMsg = `\x1b[36mStarting terminal in: ${projectPath}\x1b[0m\r\n`;
                 } else {
-                    const providerName = provider === 'cursor' ? 'Cursor' : (provider === 'codex' ? 'Codex' : (provider === 'gemini' ? 'Gemini' : 'Claude'));
+                    const providerName = provider === 'cursor' ? 'Cursor' : (provider === 'codex' ? 'Codex' : (provider === 'gapcode' ? 'GapCode' : (provider === 'gemini' ? 'Gemini' : 'Claude')));
                     welcomeMsg = hasSession ?
                         `\x1b[36mResuming ${providerName} session ${sessionId} in: ${projectPath}\x1b[0m\r\n` :
                         `\x1b[36mStarting new ${providerName} session in: ${projectPath}\x1b[0m\r\n`;
@@ -1676,6 +1693,16 @@ function handleShellConnection(ws) {
                             }
                         } else {
                             shellCommand = 'codex';
+                        }
+                    } else if (provider === 'gapcode') {
+                        if (hasSession && sessionId) {
+                            if (os.platform() === 'win32') {
+                                shellCommand = `gapcode resume "${sessionId}"; if ($LASTEXITCODE -ne 0) { gapcode }`;
+                            } else {
+                                shellCommand = `gapcode resume "${sessionId}" || gapcode`;
+                            }
+                        } else {
+                            shellCommand = 'gapcode';
                         }
                     } else if (provider === 'gemini') {
                         const command = initialCommand || 'gemini';
