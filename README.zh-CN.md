@@ -5,7 +5,7 @@
 </div>
 
 <p align="center">
-  <a href="https://cloudcli.ai">CloudCLI Cloud</a> · <a href="https://cloudcli.ai/docs">文档</a> · <a href="https://discord.gg/buxwujPNRE">Discord</a> · <a href="https://github.com/siteboon/claudecodeui/issues">Bug 报告</a> · <a href="CONTRIBUTING.md">贡献指南</a>
+  <a href="https://cloudcli.ai">CloudCLI Cloud</a> · <a href="https://cloudcli.ai/docs">文档</a> · <a href="https://discord.gg/buxwujPNRE">Discord</a> · <a href="https://github.com/rm1dev/claudecodeui/issues">Bug 报告</a> · <a href="CONTRIBUTING.md">贡献指南</a>
 </p>
 
 <p align="center">
@@ -211,7 +211,7 @@ CloudCLI UI 与 CloudCLI Cloud 是对 Claude Code 的扩展，而非旁观 — M
 
 - **[文档](https://cloudcli.ai/docs)** — 安装、配置、功能与故障排除指南
 - **[Discord](https://discord.gg/buxwujPNRE)** — 获取帮助并与社区交流
-- **[GitHub Issues](https://github.com/siteboon/claudecodeui/issues)** — 报告 Bug 与建议功能
+- **[GitHub Issues](https://github.com/rm1dev/claudecodeui/issues)** — 报告 Bug 与建议功能
 - **[贡献指南](CONTRIBUTING.md)** — 如何参与项目贡献
 
 ## 许可证

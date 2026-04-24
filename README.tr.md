@@ -5,7 +5,7 @@
 </div>
 
 <p align="center">
-  <a href="https://cloudcli.ai">CloudCLI Cloud</a> · <a href="https://cloudcli.ai/docs">Dokümantasyon</a> · <a href="https://discord.gg/buxwujPNRE">Discord</a> · <a href="https://github.com/siteboon/claudecodeui/issues">Sorun Bildir</a> · <a href="CONTRIBUTING.md">Katkıda Bulun</a>
+  <a href="https://cloudcli.ai">CloudCLI Cloud</a> · <a href="https://cloudcli.ai/docs">Dokümantasyon</a> · <a href="https://discord.gg/buxwujPNRE">Discord</a> · <a href="https://github.com/rm1dev/claudecodeui/issues">Sorun Bildir</a> · <a href="CONTRIBUTING.md">Katkıda Bulun</a>
 </p>
 
 <p align="center">
@@ -218,7 +218,7 @@ Evet, kendin barındırdığında. CloudCLI UI, Claude Code'un yerel olarak kull
 
 - **[Dokümantasyon](https://cloudcli.ai/docs)** — kurulum, yapılandırma, özellikler ve sorun giderme
 - **[Discord](https://discord.gg/buxwujPNRE)** — yardım al ve diğer kullanıcılarla tanış
-- **[GitHub Issues](https://github.com/siteboon/claudecodeui/issues)** — hata raporları ve özellik istekleri
+- **[GitHub Issues](https://github.com/rm1dev/claudecodeui/issues)** — hata raporları ve özellik istekleri
 - **[Katkı Rehberi](CONTRIBUTING.md)** — projeye nasıl katkıda bulunulur
 
 ## Lisans

@@ -5,7 +5,7 @@
 </div>
 
 <p align="center">
-  <a href="https://cloudcli.ai">CloudCLI Cloud</a> · <a href="https://cloudcli.ai/docs">ドキュメント</a> · <a href="https://discord.gg/buxwujPNRE">Discord</a> · <a href="https://github.com/siteboon/claudecodeui/issues">バグ報告</a> · <a href="CONTRIBUTING.md">コントリビュート</a>
+  <a href="https://cloudcli.ai">CloudCLI Cloud</a> · <a href="https://cloudcli.ai/docs">ドキュメント</a> · <a href="https://discord.gg/buxwujPNRE">Discord</a> · <a href="https://github.com/rm1dev/claudecodeui/issues">バグ報告</a> · <a href="CONTRIBUTING.md">コントリビュート</a>
 </p>
 
 <p align="center">
@@ -210,7 +210,7 @@ CloudCLI UI と CloudCLI Cloud は、Claude Code の横に別物として存在�
 
 - **[ドキュメント](https://cloudcli.ai/docs)** — インストール、設定、機能、トラブルシューティング
 - **[Discord](https://discord.gg/buxwujPNRE)** — ヘルプを得たり、ユーザー同士で交流したりできます
-- **[GitHub Issues](https://github.com/siteboon/claudecodeui/issues)** — バグ報告と機能要望
+- **[GitHub Issues](https://github.com/rm1dev/claudecodeui/issues)** — バグ報告と機能要望
 - **[コントリビューションガイド](CONTRIBUTING.md)** — プロジェクトへの貢献方法
 
 ## ライセンス
