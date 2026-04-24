@@ -30,6 +30,13 @@ const providerCards = [
     loginButtonClassName: 'bg-gray-800 hover:bg-gray-900 dark:bg-gray-700 dark:hover:bg-gray-600',
   },
   {
+    provider: 'gapcode' as const,
+    title: 'GapCode',
+    connectedClassName: 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800',
+    iconContainerClassName: 'bg-green-100 dark:bg-green-900/30',
+    loginButtonClassName: 'bg-green-600 hover:bg-green-700',
+  },
+  {
     provider: 'gemini' as const,
     title: 'Gemini',
     connectedClassName: 'bg-teal-50 dark:bg-teal-900/20 border-teal-200 dark:border-teal-800',

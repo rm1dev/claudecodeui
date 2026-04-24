@@ -480,6 +480,15 @@ async function getProjects(progressCallback = null) {
       }
       applyCustomSessionNames(project.codexSessions, 'codex');
 
+      // Also fetch GapCode sessions for this project
+      try {
+        project.gapcodeSessions = await getGapcodeSessions(actualProjectDir);
+      } catch (e) {
+        console.warn(`Could not load GapCode sessions for project ${entry.name}:`, e.message);
+        project.gapcodeSessions = [];
+      }
+      applyCustomSessionNames(project.gapcodeSessions, 'gapcode');
+
       // Also fetch Gemini sessions for this project (UI + CLI)
       try {
         const uiSessions = sessionManager.getProjectSessions(actualProjectDir) || [];
@@ -566,7 +575,8 @@ async function getProjects(progressCallback = null) {
           total: 0
         },
         cursorSessions: [],
-        codexSessions: []
+        codexSessions: [],
+        gapcodeSessions: []
       };
 
       // Try to fetch Cursor sessions for manual projects too
@@ -586,6 +596,14 @@ async function getProjects(progressCallback = null) {
         console.warn(`Could not load Codex sessions for manual project ${projectName}:`, e.message);
       }
       applyCustomSessionNames(project.codexSessions, 'codex');
+
+      // Try to fetch GapCode sessions for manual projects too
+      try {
+        project.gapcodeSessions = await getGapcodeSessions(actualProjectDir);
+      } catch (e) {
+        console.warn(`Could not load GapCode sessions for manual project ${projectName}:`, e.message);
+      }
+      applyCustomSessionNames(project.gapcodeSessions, 'gapcode');
 
       // Try to fetch Gemini sessions for manual projects too (UI + CLI)
       try {
@@ -1199,6 +1217,20 @@ async function deleteProject(projectName, force = false, deleteData = false) {
           }
         } catch (err) {
           console.warn('Failed to delete Codex sessions:', err.message);
+        }
+
+        // Delete GapCode sessions associated with this project
+        try {
+          const gapcodeSessions = await getGapcodeSessions(projectPath, { limit: 0 });
+          for (const session of gapcodeSessions) {
+            try {
+              await deleteGapcodeSession(session.id);
+            } catch (err) {
+              console.warn(`Failed to delete GapCode session ${session.id}:`, err.message);
+            }
+          }
+        } catch (err) {
+          console.warn('Failed to delete GapCode sessions:', err.message);
         }
 
         // Delete Cursor sessions directory if it exists
@@ -1862,6 +1894,235 @@ async function deleteCodexSession(sessionId) {
     throw error;
   }
 }
+
+// ─── GapCode session functions (fork of Codex) ───────────────────────────────
+
+async function findGapcodeJsonlFiles(dir) {
+  const files = [];
+  try {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      const fullPath = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        files.push(...await findGapcodeJsonlFiles(fullPath));
+      } else if (entry.name.endsWith('.jsonl')) {
+        files.push(fullPath);
+      }
+    }
+  } catch (error) {
+    // Skip directories we can't read
+  }
+  return files;
+}
+
+async function buildGapcodeSessionsIndex() {
+  const gapcodeSessionsDir = path.join(os.homedir(), '.gapcode', 'sessions');
+  const sessionsByProject = new Map();
+
+  try {
+    await fs.access(gapcodeSessionsDir);
+  } catch (error) {
+    return sessionsByProject;
+  }
+
+  const jsonlFiles = await findGapcodeJsonlFiles(gapcodeSessionsDir);
+
+  for (const filePath of jsonlFiles) {
+    try {
+      const sessionData = await parseCodexSessionFile(filePath);
+      if (!sessionData || !sessionData.id) continue;
+
+      const normalizedProjectPath = normalizeComparablePath(sessionData.cwd);
+      if (!normalizedProjectPath) continue;
+
+      const session = {
+        id: sessionData.id,
+        summary: sessionData.summary || 'GapCode Session',
+        messageCount: sessionData.messageCount || 0,
+        lastActivity: sessionData.timestamp ? new Date(sessionData.timestamp) : new Date(),
+        cwd: sessionData.cwd,
+        model: sessionData.model,
+        filePath,
+        provider: 'gapcode',
+      };
+
+      if (!sessionsByProject.has(normalizedProjectPath)) {
+        sessionsByProject.set(normalizedProjectPath, []);
+      }
+      sessionsByProject.get(normalizedProjectPath).push(session);
+    } catch (error) {
+      console.warn(`Could not parse GapCode session file ${filePath}:`, error.message);
+    }
+  }
+
+  for (const sessions of sessionsByProject.values()) {
+    sessions.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+  }
+
+  return sessionsByProject;
+}
+
+async function getGapcodeSessions(projectPath, options = {}) {
+  const { limit = 5, indexRef = null } = options;
+  try {
+    const normalizedProjectPath = normalizeComparablePath(projectPath);
+    if (!normalizedProjectPath) return [];
+
+    if (indexRef && !indexRef.sessionsByProject) {
+      indexRef.sessionsByProject = await buildGapcodeSessionsIndex();
+    }
+
+    const sessionsByProject = indexRef?.sessionsByProject || await buildGapcodeSessionsIndex();
+    const sessions = sessionsByProject.get(normalizedProjectPath) || [];
+    return limit > 0 ? sessions.slice(0, limit) : [...sessions];
+  } catch (error) {
+    console.error('Error fetching GapCode sessions:', error);
+    return [];
+  }
+}
+
+export async function getGapcodeSessionMessages(sessionId, limit = null, offset = 0) {
+  try {
+    const gapcodeSessionsDir = path.join(os.homedir(), '.gapcode', 'sessions');
+
+    const findSessionFile = async (dir) => {
+      try {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            const found = await findSessionFile(fullPath);
+            if (found) return found;
+          } else if (entry.name.includes(sessionId) && entry.name.endsWith('.jsonl')) {
+            return fullPath;
+          }
+        }
+      } catch (error) {
+        // Skip
+      }
+      return null;
+    };
+
+    const sessionFilePath = await findSessionFile(gapcodeSessionsDir);
+    if (!sessionFilePath) {
+      console.warn(`GapCode session file not found for session ${sessionId}`);
+      return { messages: [], total: 0, hasMore: false };
+    }
+
+    const messages = [];
+    let tokenUsage = null;
+    const fileStream = fsSync.createReadStream(sessionFilePath);
+    const rl = readline.createInterface({ input: fileStream, crlfDelay: Infinity });
+
+    const extractText = (content) => {
+      if (!Array.isArray(content)) return content;
+      return content.map(item => {
+        if (item.type === 'input_text' || item.type === 'output_text' || item.type === 'text') return item.text;
+        return '';
+      }).filter(Boolean).join('\n');
+    };
+
+    for await (const line of rl) {
+      if (!line.trim()) continue;
+      try {
+        const entry = JSON.parse(line);
+
+        if (entry.type === 'event_msg' && entry.payload?.type === 'token_count' && entry.payload?.info) {
+          const info = entry.payload.info;
+          if (info.total_token_usage) {
+            tokenUsage = { used: info.total_token_usage.total_tokens || 0, total: info.model_context_window || 200000 };
+          }
+        }
+
+        if (entry.type === 'event_msg' && isVisibleCodexUserMessage(entry.payload)) {
+          messages.push({ type: 'user', timestamp: entry.timestamp, message: { role: 'user', content: entry.payload.message } });
+        }
+
+        if (entry.type === 'response_item' && entry.payload?.type === 'message' && entry.payload.role === 'assistant') {
+          const textContent = extractText(entry.payload.content);
+          if (textContent?.trim()) {
+            messages.push({ type: 'assistant', timestamp: entry.timestamp, message: { role: 'assistant', content: textContent } });
+          }
+        }
+
+        if (entry.type === 'response_item' && entry.payload?.type === 'reasoning') {
+          const summaryText = entry.payload.summary?.map(s => s.text).filter(Boolean).join('\n');
+          if (summaryText?.trim()) {
+            messages.push({ type: 'thinking', timestamp: entry.timestamp, message: { role: 'assistant', content: summaryText } });
+          }
+        }
+
+        if (entry.type === 'response_item' && entry.payload?.type === 'function_call') {
+          let toolName = entry.payload.name;
+          let toolInput = entry.payload.arguments;
+          if (toolName === 'shell_command') {
+            toolName = 'Bash';
+            try { const args = JSON.parse(entry.payload.arguments); toolInput = JSON.stringify({ command: args.command }); } catch (e) {}
+          }
+          messages.push({ type: 'tool_use', timestamp: entry.timestamp, toolName, toolInput, toolCallId: entry.payload.call_id });
+        }
+
+        if (entry.type === 'response_item' && entry.payload?.type === 'function_call_output') {
+          messages.push({ type: 'tool_result', timestamp: entry.timestamp, toolCallId: entry.payload.call_id, output: entry.payload.output });
+        }
+      } catch (parseError) {
+        // Skip malformed lines
+      }
+    }
+
+    messages.sort((a, b) => new Date(a.timestamp || 0) - new Date(b.timestamp || 0));
+    const total = messages.length;
+
+    if (limit !== null) {
+      const startIndex = Math.max(0, total - offset - limit);
+      const endIndex = total - offset;
+      return { messages: messages.slice(startIndex, endIndex), total, hasMore: startIndex > 0, offset, limit, tokenUsage };
+    }
+
+    return { messages, tokenUsage };
+  } catch (error) {
+    console.error(`Error reading GapCode session messages for ${sessionId}:`, error);
+    return { messages: [], total: 0, hasMore: false };
+  }
+}
+
+export async function deleteGapcodeSession(sessionId) {
+  try {
+    const gapcodeSessionsDir = path.join(os.homedir(), '.gapcode', 'sessions');
+
+    const findJsonlFiles = async (dir) => {
+      const files = [];
+      try {
+        const entries = await fs.readdir(dir, { withFileTypes: true });
+        for (const entry of entries) {
+          const fullPath = path.join(dir, entry.name);
+          if (entry.isDirectory()) {
+            files.push(...await findJsonlFiles(fullPath));
+          } else if (entry.name.endsWith('.jsonl')) {
+            files.push(fullPath);
+          }
+        }
+      } catch (error) {}
+      return files;
+    };
+
+    const jsonlFiles = await findJsonlFiles(gapcodeSessionsDir);
+    for (const filePath of jsonlFiles) {
+      const sessionData = await parseCodexSessionFile(filePath);
+      if (sessionData && sessionData.id === sessionId) {
+        await fs.unlink(filePath);
+        return true;
+      }
+    }
+
+    throw new Error(`GapCode session file not found for session ${sessionId}`);
+  } catch (error) {
+    console.error(`Error deleting GapCode session ${sessionId}:`, error);
+    throw error;
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function searchConversations(query, limit = 50, onProjectResult = null, signal = null) {
   const safeQuery = typeof query === 'string' ? query.trim() : '';
@@ -2549,6 +2810,7 @@ export {
   getCodexSessions,
   getCodexSessionMessages,
   deleteCodexSession,
+  getGapcodeSessions,
   getGeminiCliSessions,
   getGeminiCliSessionMessages,
   searchConversations

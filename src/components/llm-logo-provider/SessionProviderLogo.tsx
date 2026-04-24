@@ -3,6 +3,7 @@ import ClaudeLogo from './ClaudeLogo';
 import CodexLogo from './CodexLogo';
 import CursorLogo from './CursorLogo';
 import GeminiLogo from './GeminiLogo';
+import GapcodeLogo from './GapcodeLogo';
 
 type SessionProviderLogoProps = {
   provider?: LLMProvider | string | null;
@@ -19,6 +20,10 @@ export default function SessionProviderLogo({
 
   if (provider === 'codex') {
     return <CodexLogo className={className} />;
+  }
+
+  if (provider === 'gapcode') {
+    return <GapcodeLogo className={className} />;
   }
 
   if (provider === 'gemini') {

@@ -72,6 +72,8 @@ function ChatInterface({
     setClaudeModel,
     codexModel,
     setCodexModel,
+    gapcodeModel,
+    setGapcodeModel,
     geminiModel,
     setGeminiModel,
     permissionMode,
@@ -182,6 +184,7 @@ function ChatInterface({
     cursorModel,
     claudeModel,
     codexModel,
+    gapcodeModel,
     geminiModel,
     isLoading,
     canAbortSession,
@@ -281,9 +284,11 @@ function ChatInterface({
         ? t('messageTypes.cursor')
         : provider === 'codex'
           ? t('messageTypes.codex')
-          : provider === 'gemini'
-            ? t('messageTypes.gemini')
-            : t('messageTypes.claude');
+          : provider === 'gapcode'
+            ? t('messageTypes.gapcode')
+            : provider === 'gemini'
+              ? t('messageTypes.gemini')
+              : t('messageTypes.claude');
 
     return (
       <div className="flex h-full items-center justify-center">
@@ -319,6 +324,8 @@ function ChatInterface({
           setCursorModel={setCursorModel}
           codexModel={codexModel}
           setCodexModel={setCodexModel}
+          gapcodeModel={gapcodeModel}
+          setGapcodeModel={setGapcodeModel}
           geminiModel={geminiModel}
           setGeminiModel={setGeminiModel}
           tasksEnabled={tasksEnabled}

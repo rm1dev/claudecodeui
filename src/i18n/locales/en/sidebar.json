@@ -13,6 +13,7 @@
     "untitledSession": "Untitled Session",
     "newSession": "New Session",
     "codexSession": "Codex Session",
+    "gapcodeSession": "GapCode Session",
     "fetchingProjects": "Fetching your Claude projects and sessions",
     "projects": "projects",
     "noMatchingProjects": "No matching projects",

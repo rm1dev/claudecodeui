@@ -58,6 +58,7 @@ const projectsHaveChanges = (
     return (
       serialize(nextProject.cursorSessions) !== serialize(prevProject.cursorSessions) ||
       serialize(nextProject.codexSessions) !== serialize(prevProject.codexSessions) ||
+      serialize(nextProject.gapcodeSessions) !== serialize(prevProject.gapcodeSessions) ||
       serialize(nextProject.geminiSessions) !== serialize(prevProject.geminiSessions)
     );
   });
@@ -67,6 +68,7 @@ const getProjectSessions = (project: Project): ProjectSession[] => {
   return [
     ...(project.sessions ?? []),
     ...(project.codexSessions ?? []),
+    ...(project.gapcodeSessions ?? []),
     ...(project.cursorSessions ?? []),
     ...(project.geminiSessions ?? []),
   ];
@@ -350,6 +352,21 @@ export function useProjectsState({
         }
         if (shouldUpdateSession) {
           setSelectedSession({ ...codexSession, __provider: 'codex' });
+        }
+        return;
+      }
+
+      const gapcodeSession = project.gapcodeSessions?.find((session) => session.id === sessionId);
+      if (gapcodeSession) {
+        const shouldUpdateProject = selectedProject?.name !== project.name;
+        const shouldUpdateSession =
+          selectedSession?.id !== sessionId || selectedSession.__provider !== 'gapcode';
+
+        if (shouldUpdateProject) {
+          setSelectedProject(project);
+        }
+        if (shouldUpdateSession) {
+          setSelectedSession({ ...gapcodeSession, __provider: 'gapcode' });
         }
         return;
       }

@@ -54,6 +54,14 @@ const agentConfig: Record<AgentProvider, AgentVisualConfig> = {
     subtextClass: 'text-indigo-700 dark:text-indigo-300',
     buttonClass: 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800',
   },
+  gapcode: {
+    name: 'GapCode',
+    bgClass: 'bg-green-50 dark:bg-green-900/20',
+    borderClass: 'border-green-200 dark:border-green-800',
+    textClass: 'text-green-900 dark:text-green-100',
+    subtextClass: 'text-green-700 dark:text-green-300',
+    buttonClass: 'bg-green-600 hover:bg-green-700 active:bg-green-800',
+  },
 };
 
 export default function AccountContent({ agent, authStatus, onLogin }: AccountContentProps) {

@@ -43,6 +43,7 @@ export type SidebarProps = {
 export type SessionViewModel = {
   isCursorSession: boolean;
   isCodexSession: boolean;
+  isGapcodeSession: boolean;
   isGeminiSession: boolean;
   isActive: boolean;
   sessionName: string;

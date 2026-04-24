@@ -39,6 +39,7 @@ interface UseChatComposerStateArgs {
   cursorModel: string;
   claudeModel: string;
   codexModel: string;
+  gapcodeModel: string;
   geminiModel: string;
   isLoading: boolean;
   canAbortSession: boolean;
@@ -111,6 +112,7 @@ export function useChatComposerState({
   cursorModel,
   claudeModel,
   codexModel,
+  gapcodeModel,
   geminiModel,
   isLoading,
   canAbortSession,
@@ -281,7 +283,7 @@ export function useChatComposerState({
           projectName: selectedProject.name,
           sessionId: currentSessionId,
           provider,
-          model: provider === 'cursor' ? cursorModel : provider === 'codex' ? codexModel : provider === 'gemini' ? geminiModel : claudeModel,
+          model: provider === 'cursor' ? cursorModel : provider === 'codex' ? codexModel : provider === 'gapcode' ? gapcodeModel : provider === 'gemini' ? geminiModel : claudeModel,
           tokenUsage: tokenBudget,
         };
 
@@ -569,9 +571,11 @@ export function useChatComposerState({
               ? 'cursor-tools-settings'
               : provider === 'codex'
                 ? 'codex-settings'
-                : provider === 'gemini'
-                  ? 'gemini-settings'
-                  : 'claude-settings';
+                : provider === 'gapcode'
+                  ? 'gapcode-settings'
+                  : provider === 'gemini'
+                    ? 'gemini-settings'
+                    : 'claude-settings';
           const savedSettings = safeLocalStorage.getItem(settingsKey);
           if (savedSettings) {
             return JSON.parse(savedSettings);
@@ -618,6 +622,21 @@ export function useChatComposerState({
             sessionId: effectiveSessionId,
             resume: Boolean(effectiveSessionId),
             model: codexModel,
+            sessionSummary,
+            permissionMode: permissionMode === 'plan' ? 'default' : permissionMode,
+          },
+        });
+      } else if (provider === 'gapcode') {
+        sendMessage({
+          type: 'gapcode-command',
+          command: messageContent,
+          sessionId: effectiveSessionId,
+          options: {
+            cwd: resolvedProjectPath,
+            projectPath: resolvedProjectPath,
+            sessionId: effectiveSessionId,
+            resume: Boolean(effectiveSessionId),
+            model: gapcodeModel,
             sessionSummary,
             permissionMode: permissionMode === 'plan' ? 'default' : permissionMode,
           },
@@ -679,6 +698,7 @@ export function useChatComposerState({
       currentSessionId,
       cursorModel,
       executeCommand,
+      gapcodeModel,
       geminiModel,
       isLoading,
       onSessionActive,

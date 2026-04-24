@@ -122,9 +122,9 @@ export default function McpServers({ selectedProvider, currentProjects }: McpSer
   });
   const globalButtonLabel = 'Add Global MCP Server';
   const providerButtonLabel = `Add ${providerName} MCP Server`;
-  const globalAddDescription = 'Add Global MCP Server writes one common stdio or HTTP server to Claude, Cursor, Codex, and Gemini.';
+  const globalAddDescription = 'Add Global MCP Server writes one common stdio or HTTP server to Claude, Cursor, Codex, GapCode, and Gemini.';
   const providerAddDescription = `${providerButtonLabel} only changes ${providerName}.`;
-  const globalModalDescription = 'Adds this MCP server to every provider: Claude, Cursor, Codex, and Gemini. '
+  const globalModalDescription = 'Adds this MCP server to every provider: Claude, Cursor, Codex, GapCode, and Gemini. '
     + 'Only stdio and HTTP transports are supported because the same config must work across all providers.';
 
   return (
@@ -242,7 +242,7 @@ export default function McpServers({ selectedProvider, currentProjects }: McpSer
         )}
       </div>
 
-      {selectedProvider === 'codex' && (
+      {(selectedProvider === 'codex' || selectedProvider === 'gapcode') && (
         <div className="rounded-lg border border-border bg-muted/50 p-4">
           <h4 className="mb-2 font-medium text-foreground">{t('mcpServers.help.title')}</h4>
           <p className="text-sm text-muted-foreground">{t('mcpServers.help.description')}</p>
