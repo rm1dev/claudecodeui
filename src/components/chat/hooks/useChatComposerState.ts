@@ -41,6 +41,11 @@ interface UseChatComposerStateArgs {
   codexModel: string;
   gapcodeModel: string;
   geminiModel: string;
+  setCursorModel: (model: string) => void;
+  setClaudeModel: (model: string) => void;
+  setCodexModel: (model: string) => void;
+  setGapcodeModel: (model: string) => void;
+  setGeminiModel: (model: string) => void;
   isLoading: boolean;
   canAbortSession: boolean;
   tokenBudget: Record<string, unknown> | null;
@@ -114,6 +119,11 @@ export function useChatComposerState({
   codexModel,
   gapcodeModel,
   geminiModel,
+  setCursorModel,
+  setClaudeModel,
+  setCodexModel,
+  setGapcodeModel,
+  setGeminiModel,
   isLoading,
   canAbortSession,
   tokenBudget,
@@ -171,11 +181,59 @@ export function useChatComposerState({
           break;
 
         case 'model':
-          addMessage({
-            type: 'assistant',
-            content: `**Current Model**: ${data.current.model}\n\n**Available Models**:\n\nClaude: ${data.available.claude.join(', ')}\n\nCursor: ${data.available.cursor.join(', ')}`,
-            timestamp: Date.now(),
-          });
+          if (data.error) {
+            addMessage({
+              type: 'assistant',
+              content: `❌ ${data.error}`,
+              timestamp: Date.now(),
+            });
+            break;
+          }
+
+          if (data.switchTo) {
+            const { model: newModel } = data.switchTo;
+
+            if (newModel) {
+              switch (provider) {
+                case 'claude':
+                  setClaudeModel(newModel);
+                  localStorage.setItem('claude-model', newModel);
+                  break;
+                case 'cursor':
+                  setCursorModel(newModel);
+                  localStorage.setItem('cursor-model', newModel);
+                  break;
+                case 'codex':
+                  setCodexModel(newModel);
+                  localStorage.setItem('codex-model', newModel);
+                  break;
+                case 'gapcode':
+                  setGapcodeModel(newModel);
+                  localStorage.setItem('gapcode-model', newModel);
+                  break;
+                case 'gemini':
+                  setGeminiModel(newModel);
+                  localStorage.setItem('gemini-model', newModel);
+                  break;
+              }
+            }
+
+            addMessage({
+              type: 'assistant',
+              content: `Switched **${provider}** model to **${newModel}**`,
+              timestamp: Date.now(),
+            });
+          } else {
+            addMessage({
+              type: 'assistant',
+              content: `Select a ${data.provider} model:`,
+              timestamp: Date.now(),
+              isModelSelector: true,
+              modelProvider: data.provider,
+              currentModel: data.current.model,
+              models: data.models,
+            });
+          }
           break;
 
         case 'cost': {
@@ -234,7 +292,19 @@ export function useChatComposerState({
           console.warn('Unknown built-in command action:', action);
       }
     },
-    [onFileOpen, onShowSettings, addMessage, clearMessages, rewindMessages],
+    [
+      provider,
+      onFileOpen,
+      onShowSettings,
+      addMessage,
+      clearMessages,
+      rewindMessages,
+      setClaudeModel,
+      setCursorModel,
+      setCodexModel,
+      setGapcodeModel,
+      setGeminiModel,
+    ],
   );
 
   const handleCustomCommand = useCallback(async (result: CommandExecutionResult) => {

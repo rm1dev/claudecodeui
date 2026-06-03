@@ -27,7 +27,8 @@ export type MessageKind =
   | 'permission_cancelled'
   | 'session_created'
   | 'interactive_prompt'
-  | 'task_notification';
+  | 'task_notification'
+  | 'model_selector';
 
 export interface NormalizedMessage {
   id: string;
@@ -60,6 +61,9 @@ export interface NormalizedMessage {
   parentToolUseId?: string;
   subagentTools?: unknown[];
   isFinal?: boolean;
+  modelProvider?: LLMProvider;
+  currentModel?: string;
+  models?: string[];
   // Cursor-specific ordering
   sequence?: number;
   rowid?: number;

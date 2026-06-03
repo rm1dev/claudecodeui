@@ -138,6 +138,18 @@ export function normalizedToChatMessages(messages: NormalizedMessage[]): ChatMes
         });
         break;
 
+      case 'model_selector':
+        converted.push({
+          type: 'assistant',
+          content: msg.content || '',
+          timestamp: msg.timestamp,
+          isModelSelector: true,
+          modelProvider: msg.modelProvider,
+          currentModel: msg.currentModel,
+          models: Array.isArray(msg.models) ? msg.models : [],
+        });
+        break;
+
       case 'task_notification':
         converted.push({
           type: 'assistant',

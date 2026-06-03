@@ -33,6 +33,7 @@ type MessageComponentProps = {
   showThinking?: boolean;
   selectedProject?: Project | null;
   provider: Provider | string;
+  onModelSelect?: (model: string, modelProvider: Provider) => void;
 };
 
 type InteractiveOption = {
@@ -44,7 +45,7 @@ type InteractiveOption = {
 type PermissionGrantState = 'idle' | 'granted' | 'error';
 const COPY_HIDDEN_TOOL_NAMES = new Set(['Bash', 'Edit', 'Write', 'ApplyPatch']);
 
-const MessageComponent = memo(({ message, prevMessage, createDiff, onFileOpen, onShowSettings, onGrantToolPermission, autoExpandTools, showRawParameters, showThinking, selectedProject, provider }: MessageComponentProps) => {
+const MessageComponent = memo(({ message, prevMessage, createDiff, onFileOpen, onShowSettings, onGrantToolPermission, autoExpandTools, showRawParameters, showThinking, selectedProject, provider, onModelSelect }: MessageComponentProps) => {
   const { t } = useTranslation('chat');
   const isGrouped = prevMessage && prevMessage.type === message.type &&
     ((prevMessage.type === 'assistant') ||
@@ -379,6 +380,35 @@ const MessageComponent = memo(({ message, prevMessage, createDiff, onFileOpen, o
                   </div>
                 </div>
               </div>
+            ) : message.isModelSelector ? (
+              <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
+                <div className="mb-3 text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Current {String(message.modelProvider || provider)} model:
+                  <span className="ml-1 text-blue-600 dark:text-blue-400">{String(message.currentModel || '')}</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {Array.isArray(message.models) && message.models.map((model) => {
+                    const modelName = String(model);
+                    const isCurrent = modelName === message.currentModel;
+                    return (
+                      <button
+                        key={modelName}
+                        type="button"
+                        disabled={isCurrent}
+                        onClick={() => onModelSelect?.(modelName, String(message.modelProvider || provider) as Provider)}
+                        className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
+                          isCurrent
+                            ? 'cursor-default border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300'
+                            : 'border-gray-200 bg-gray-50 text-gray-700 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-200 dark:hover:border-blue-800 dark:hover:bg-blue-950/40 dark:hover:text-blue-300'
+                        }`}
+                      >
+                        {modelName}
+                        {isCurrent && <span className="ml-1">✓</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             ) : message.isThinking ? (
               /* Thinking messages — Reasoning component (ai-elements pattern) */
               <Reasoning defaultOpen={false}>
@@ -469,4 +499,3 @@ const MessageComponent = memo(({ message, prevMessage, createDiff, onFileOpen, o
 });
 
 export default MessageComponent;
-

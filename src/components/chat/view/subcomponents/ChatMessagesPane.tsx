@@ -38,6 +38,7 @@ interface ChatMessagesPaneProps {
   sessionMessagesCount: number;
   visibleMessageCount: number;
   visibleMessages: ChatMessage[];
+  onModelSelect: (model: string, modelProvider: LLMProvider) => void;
   loadEarlierMessages: () => void;
   loadAllMessages: () => void;
   allMessagesLoaded: boolean;
@@ -85,6 +86,7 @@ export default function ChatMessagesPane({
   sessionMessagesCount,
   visibleMessageCount,
   visibleMessages,
+  onModelSelect,
   loadEarlierMessages,
   loadAllMessages,
   allMessagesLoaded,
@@ -259,6 +261,7 @@ export default function ChatMessagesPane({
                 showThinking={showThinking}
                 selectedProject={selectedProject}
                 provider={provider}
+                onModelSelect={onModelSelect}
               />
             );
           })}
@@ -267,4 +270,3 @@ export default function ChatMessagesPane({
     </div>
   );
 }
-

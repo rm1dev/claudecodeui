@@ -2,7 +2,7 @@ import express from 'express';
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
-import { CLAUDE_MODELS, CURSOR_MODELS, CODEX_MODELS } from '../../shared/modelConstants.js';
+import { CLAUDE_MODELS, CURSOR_MODELS, CODEX_MODELS, GAPCODE_MODELS, GEMINI_MODELS } from '../../shared/modelConstants.js';
 import { parseFrontmatter } from '../utils/frontmatter.js';
 import { findAppRoot, getModuleDir } from '../utils/runtime-paths.js';
 
@@ -185,28 +185,53 @@ Custom commands can be created in:
   },
 
   '/model': async (args, context) => {
-    // Read available models from centralized constants
     const availableModels = {
       claude: CLAUDE_MODELS.OPTIONS.map(o => o.value),
       cursor: CURSOR_MODELS.OPTIONS.map(o => o.value),
-      codex: CODEX_MODELS.OPTIONS.map(o => o.value)
+      codex: CODEX_MODELS.OPTIONS.map(o => o.value),
+      gapcode: GAPCODE_MODELS.OPTIONS.map(o => o.value),
+      gemini: GEMINI_MODELS.OPTIONS.map(o => o.value)
     };
 
     const currentProvider = context?.provider || 'claude';
     const currentModel = context?.model || CLAUDE_MODELS.DEFAULT;
+    const providerModels = availableModels[currentProvider] || [];
+
+    if (args.length > 0) {
+      const requestedModel = args.join(' ').trim();
+
+      if (!providerModels.includes(requestedModel)) {
+        return {
+          type: 'builtin',
+          action: 'model',
+          data: {
+            current: { provider: currentProvider, model: currentModel },
+            provider: currentProvider,
+            models: providerModels,
+            error: `Model "${requestedModel}" is not available for ${currentProvider}.`
+          }
+        };
+      }
+
+      return {
+        type: 'builtin',
+        action: 'model',
+        data: {
+          current: { provider: currentProvider, model: currentModel },
+          provider: currentProvider,
+          models: providerModels,
+          switchTo: { provider: currentProvider, model: requestedModel }
+        }
+      };
+    }
 
     return {
       type: 'builtin',
       action: 'model',
       data: {
-        current: {
-          provider: currentProvider,
-          model: currentModel
-        },
-        available: availableModels,
-        message: args.length > 0
-          ? `Switching to model: ${args[0]}`
-          : `Current model: ${currentModel}`
+        current: { provider: currentProvider, model: currentModel },
+        provider: currentProvider,
+        models: providerModels,
       }
     };
   },

@@ -65,6 +65,16 @@ function chatMessageToNormalized(
   if (msg.isInteractivePrompt) {
     return { ...base, kind: 'interactive_prompt', content: msg.content || '' } as NormalizedMessage;
   }
+  if ((msg as any).isModelSelector) {
+    return {
+      ...base,
+      kind: 'model_selector',
+      content: msg.content || '',
+      modelProvider: (msg as any).modelProvider,
+      currentModel: (msg as any).currentModel,
+      models: Array.isArray((msg as any).models) ? (msg as any).models : [],
+    } as NormalizedMessage;
+  }
   if ((msg as any).isTaskNotification) {
     return {
       ...base,

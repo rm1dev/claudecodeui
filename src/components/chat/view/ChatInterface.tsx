@@ -186,6 +186,11 @@ function ChatInterface({
     codexModel,
     gapcodeModel,
     geminiModel,
+    setCursorModel,
+    setClaudeModel,
+    setCodexModel,
+    setGapcodeModel,
+    setGeminiModel,
     isLoading,
     canAbortSession,
     tokenBudget,
@@ -278,6 +283,51 @@ function ChatInterface({
     handlePermissionDecision,
   }), [pendingPermissionRequests, handlePermissionDecision]);
 
+  const handleModelSelect = useCallback(
+    (model: string, modelProvider: LLMProvider) => {
+      if (modelProvider !== provider) {
+        addMessage({
+          type: 'assistant',
+          content: `This model list is for **${modelProvider}**. Current provider is **${provider}**; run \`/model\` again to switch models.`,
+          timestamp: Date.now(),
+        });
+        return;
+      }
+
+      if (modelProvider === 'claude') {
+        setClaudeModel(model);
+        localStorage.setItem('claude-model', model);
+      } else if (modelProvider === 'cursor') {
+        setCursorModel(model);
+        localStorage.setItem('cursor-model', model);
+      } else if (modelProvider === 'codex') {
+        setCodexModel(model);
+        localStorage.setItem('codex-model', model);
+      } else if (modelProvider === 'gapcode') {
+        setGapcodeModel(model);
+        localStorage.setItem('gapcode-model', model);
+      } else if (modelProvider === 'gemini') {
+        setGeminiModel(model);
+        localStorage.setItem('gemini-model', model);
+      }
+
+      addMessage({
+        type: 'assistant',
+        content: `Switched **${modelProvider}** model to **${model}**`,
+        timestamp: Date.now(),
+      });
+    },
+    [
+      provider,
+      addMessage,
+      setClaudeModel,
+      setCursorModel,
+      setCodexModel,
+      setGapcodeModel,
+      setGeminiModel,
+    ],
+  );
+
   if (!selectedProject) {
     const selectedProviderLabel =
       provider === 'cursor'
@@ -338,6 +388,7 @@ function ChatInterface({
           sessionMessagesCount={chatMessages.length}
           visibleMessageCount={visibleMessageCount}
           visibleMessages={visibleMessages}
+          onModelSelect={handleModelSelect}
           loadEarlierMessages={loadEarlierMessages}
           loadAllMessages={loadAllMessages}
           allMessagesLoaded={allMessagesLoaded}
